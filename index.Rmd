@@ -19,15 +19,18 @@ tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
 
 ## Data Wrangling, Exploration, Visualization
 
-### Name and EID here
+### Anita Rhodes, aar4395
 
 #### Introduction 
 
 Paragraph or two introducing your datasets and variables, why they are interesting to you, etc.
 
-```{R}
-# read your datasets in here, e.g., with read_csv()
+The PopMovies dataset contains the top 10000 most popular movies based off of TMDB ratings. The Oscars dataset contains movies that have one some Oscars award (either nomination or the true winner). Some of the notable variables included are popularity scores, viewer TMDB ratings, release year, and genres. This data is interesting to me because there has been much speculation about biased and/or stereotype-charged Oscar nominations, so I want to see if movie quality markers (ex. popularity, ratings) actually match up for Oscar winners vs non-Oscar winners.
 
+```{R}
+library(tidyverse)
+Oscars <- read_csv("oscars_df.csv")
+PopMovies <- read_csv("Top_10000_Popular_Movies.csv")
 ```
 
 #### Tidying: Reshaping
@@ -35,52 +38,89 @@ Paragraph or two introducing your datasets and variables, why they are interesti
 If your datasets are tidy already, demonstrate that you can reshape data with pivot wider/longer here (e.g., untidy and then retidy). Alternatively, it may be easier to wait until the wrangling section so you can reshape your summary statistics. Note here if you are going to do this.
 
 ```{R}
-# your tidying code (if applicable; can also wait until wrangling section)
+PopMovies %>% separate(6, sep="-", into = c("Year", "month", "day")) -> PopMovies_Reshaped
 ```
 
     
 #### Joining/Merging
 
 ```{R}
-# your joining code
+PopMovies_Reshaped %>% left_join(Oscars, by = c("original_title"="Film")) -> Pop2Oscar
 
-# your joining code
 ```
 
-Discussions of joining here. Feel encouraged to break up into more than once code chunk and discuss each in turn.
+The datasets were left joined by movie/film name, keeping all the PopMovies films but only the Oscars films that had a match in PopMovies (although all of the Oscar films ended up being in the popmovies dataset already). This was done so that statistics for Oscar-winning movies vs movies without an Oscar could be compared. The original 'PopMovies' dataset had 10000 observations, the 'Oscars' dataset had 571 observations, and the resulting joined dataset had 10009 observations. The IDs included in both datasets include the movie name, year, and genre. The Oscars dataset includes tomatometer, audience, and streaming data that is not included in the PopMovies dataset. After joining, no observations were dropped from the Oscars dataset. 
 
 ####  Wrangling
 
 ```{R}
-# your wrangling code
+Pop2Oscar %>% mutate(Oscar=ifelse(is.na(`Oscar Year`), "N", "Y")) -> Project_df
+Project_df %>% rename(title=original_title) -> Project_df
+Project_df %>% filter(Year <2021) -> Project_df
 
-# your wrangling code
+#popularity, avg rating (vote), & number of votes of oscar vs non-oscar movies
+Project_df %>% select(popularity,vote_average,vote_count, Oscar) %>% group_by(Oscar) %>% summarize_if(is.numeric, mean)
+Project_df %>% group_by(Oscar) %>% summarise(sd(popularity), min(popularity), max(popularity), )
+Project_df %>% group_by(Oscar) %>% filter(vote_count>0) %>% summarise(sd(vote_average), min(vote_average), max(vote_average))
+Project_df %>% group_by(Oscar) %>% filter(vote_count>0)  %>% summarise(sd(vote_count), min(vote_count), max(vote_count))
 
-# your wrangling code
+Project_df %>% group_by(Oscar) %>% summarise(n())
+Project_df %>% group_by(original_language) %>% summarise(n=n()) %>% arrange(desc(n))
+Project_df %>% filter(Oscar=="Y") %>% group_by(original_language) %>% summarise(n())
+Project_df %>% filter(Oscar=="N") %>% group_by(original_language) %>% summarise(n())
+Project_df %>% group_by(Oscar) %>% summarise(n_distinct(original_language))
+
+Project_df %>% group_by(Oscar) %>%  summarise(sum(is.na(original_language)))
+Project_df %>% group_by(Oscar) %>%  summarise(sum(is.na(genre)))
+
+Project_df %>% group_by(Directors) %>% summarise(p=mean(popularity)) %>% arrange(desc(p))
+Project_df %>% group_by(title) %>% summarise(popularity, vote_average, Oscar) %>% arrange(desc(popularity))
+
+Project_df %>% filter(Oscar=="Y") %>% select(genre) -> genrestr
+genrestr %>% str_c(collapse = " ") %>% str_replace_all("[^a-zA-Z0-9 ]","") %>% strsplit(" ") %>% unlist() -> genrewords
+genres <- as.data.frame(genrewords)
+genres %>% group_by(genrewords) %>% summarise(n=n()) %>% arrange(desc(n))
+Project_df %>% filter(str_detect(genre, "Animation"), Oscar=="Y") %>% mutate(propOscars=sum(n())/318) %>% distinct(propOscars)
+Project_df %>% filter(str_detect(genre, "Drama"), Oscar=="Y") %>% mutate(propOscars=sum(n())/318) %>% distinct(propOscars)
+
+#Project_df %>% select(title,genre) %>% group_by(title) %>% mutate(genre=paste(unlist(genre), separate_rows(genre,sep=", ")))
+Project_df %>% mutate(genre=str_replace_all(genre,"[^a-zA-Z0-9, ]","")) -> Project_df
+glimpse(Project_df)
+#Project_df %>% mutate(genre=unlist(genre), sepa
+#Project_df %>% select(title,genre) %>% group_by(title) %>%  mutate(genre=str_replace_all(genre,"[^a-zA-Z0-9, ]",""))
+#Project_df %>% select(title,genre) %>% group_by(title) %>%  unlist(genre)
+#Project_df %>% mutate(genre=str_replace_all(genre,"[^a-zA-Z0-9, ]",""),unlist(genre)) %>% ggplot(aes(genre)) + geom_bar()
+
 ```
 
 Your discussion of wrangling section here. Feel encouraged to break up into more than once code chunk and discuss each in turn.
+
+A new variable called "Oscar" was created that states whether or not a movie has won and Oscar. The joined dataset was trimmed to only include movies released earlier than 2021 since Oscar awards have not yet been determined for 2021/2022. Summary statistics of numeric variables grouped by Oscar-winning movies vs non-winning movies show that popularity between Oscar movies and non-Oscar movies is nearly the same (~25.6) while the average rating is slightly higher for Oscar movies. The number of ratings for Oscar movies was much higher than non-Oscar movies by a difference of ~3500 ratings. This shows that Oscar-winning movies do seem to be "better" based on average ratings, even though the maximum rating and popularity values are higher for non Oscar movies. 
+
+A count of movies by original language reveals that of all the popular movies, english is the most common language, followed by japanese, spanish, then french. Despite this, Oscars have only been given to movies in english, spanish, and french. A count of genres for Oscar-winning movies shows that drama is the most common genre (85% of winners) among Oscar winners while animation is the least common (9.4% of winners).
 
 
 #### Visualizing
 
 ```{R}
-# your plot 1
+Project_df %>% ggplot(aes(x=Oscar, y=vote_average, color=Oscar)) + ylab("Average Rating") + ggtitle("Distribution of Movie Ratings") + geom_boxplot(size=1) + geom_jitter(alpha=.05) + theme(legend.position = "none")
 ```
 
-Your discussion of plot 1
+This plot visually diplays the five number summary for oscar-winning vs non ocar-winning movies (min, max, median, upper and lower quartiles) and an overlay of the true data points. From this we can see that the Oscar-winning movies have a much smaller spread of data and are generally rated higher than non Oscar-winning movies. They also have much fewer outliers.
 
 ```{R}
-# your plot 2
+Project_df %>% ggplot(aes(x=vote_average, fill=Oscar)) + ggtitle("Shape of Movie Ratings") + geom_histogram(alpha=.5) + scale_y_continuous(lim=c(0,400), breaks = seq(0,400,50))
+Project_df %>% ggplot(aes(x=popularity, fill=Oscar)) + ggtitle("Distribution & Shape of Movie Ratings") + geom_density(alpha=.3) + geom_rug() + scale_x_continuous(lim=c(0,150))
+
 ```
 
-Your discussion of plot 2
+This plot shows the shape and distribution of movie popularity. Both Oscar winners and non-Oscar winners have a unimodal shape, with a very similar distribution as their graphs overlab almost entirely. 
 
 ```{R}
-# your plot 3
+Project_df %>% na.omit() %>% ggplot(aes(x=Year,y=popularity, color=Award)) + geom_point() + scale_y_continuous(lim=c(0,150)) + scale_x_discrete(breaks = seq(0,2020,10)) 
 ```
 
-Your discussion of plot 3
+This graph demonstrates that the popularity of Oscar winners and nominees are increasing with time, but more so for Oscar winners.
 
 #### Concluding Remarks
 

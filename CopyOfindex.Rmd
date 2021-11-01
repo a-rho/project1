@@ -1,0 +1,103 @@
+---
+title: 'Project 1: Wrangling, Exploration, Visualization'
+author: "SDS322E"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+## Data Wrangling, Exploration, Visualization
+
+### Anita Rhodes, aar4395
+
+#### Introduction 
+
+Paragraph or two introducing your datasets and variables, why they are interesting to you, etc.
+
+```{R}
+library(tidyverse)
+Oscars <- read_csv("oscars_df.csv")
+PopMovies <- read_csv("Top_10000_Popular_Movies.csv")
+```
+
+#### Tidying: Reshaping
+
+If your datasets are tidy already, demonstrate that you can reshape data with pivot wider/longer here (e.g., untidy and then retidy). Alternatively, it may be easier to wait until the wrangling section so you can reshape your summary statistics. Note here if you are going to do this.
+
+```{R}
+PopMovies %>% separate(6, sep="-", into = c("Year", "month", "day")) -> PopMovies_Reshaped
+```
+
+    
+#### Joining/Merging
+
+```{R}
+#Oscars %>% left_join(PopMovies, by = c("Film"="original_title")) -> joined_movies
+#Oscars %>% inner_join(PopMovies) -> joined_movies
+PopMovies_Reshaped %>% left_join(Oscars, by = c("original_title"="Film")) -> Pop2Oscar
+
+```
+
+The datasets were inner joined by movie/film name, keeping only the movies in the popular movies dataset that received an Oscar. The original 'PopMovies' dataset had 10000 observations, the 'Oscars' dataset had 571 observations, and the resulting joined dataset had 571 observations. The IDs included in both datasets include the movie name, year, and genre. After joining, 9429 observations were dropped from the PopMovies dataset. 
+
+####  Wrangling
+
+```{R}
+Pop2Oscar %>% mutate(Oscar=ifelse(is.na('Oscar Year'), "N", "Y")) %>% glimpse() -> Project_df
+Project_df %>% rename(title=original_title) -> Project_df
+Project_df %>% glimpse()
+
+#popularity, avg rating (vote), & number of votes of oscar vs non-oscar movies
+Project_df %>% group_by(Oscar) %>% summarise(pop=mean(popularity), rating=mean(vote_average), votes=mean(vote_count))
+
+
+Project_df %>% filter(Oscar=="Y") %>% group_by(original_language) %>% summarise(n())
+Project_df %>% filter(Oscar=="N") %>% group_by(original_language) %>% summarise(n())
+#Project_df %>% group_by(Oscar,original_language) %>% summarise(n=n(), )
+
+# your wrangling code
+```
+
+Your discussion of wrangling section here. Feel encouraged to break up into more than once code chunk and discuss each in turn.
+
+The variable "Year of Release" was removed as those values were contained in the 'year' data from the PopMovies dataset.
+
+
+#### Visualizing
+
+```{R}
+# your plot 1
+```
+
+Your discussion of plot 1
+
+```{R}
+# your plot 2
+```
+
+Your discussion of plot 2
+
+```{R}
+# your plot 3
+```
+
+Your discussion of plot 3
+
+#### Concluding Remarks
+
+If any!
+
+
+
+
