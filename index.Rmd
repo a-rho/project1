@@ -85,7 +85,6 @@ Project_df %>% filter(str_detect(genre, "Drama"), Oscar=="Y") %>% mutate(propOsc
 
 #Project_df %>% select(title,genre) %>% group_by(title) %>% mutate(genre=paste(unlist(genre), separate_rows(genre,sep=", ")))
 Project_df %>% mutate(genre=str_replace_all(genre,"[^a-zA-Z0-9, ]","")) -> Project_df
-glimpse(Project_df)
 #Project_df %>% mutate(genre=unlist(genre), sepa
 #Project_df %>% select(title,genre) %>% group_by(title) %>%  mutate(genre=str_replace_all(genre,"[^a-zA-Z0-9, ]",""))
 #Project_df %>% select(title,genre) %>% group_by(title) %>%  unlist(genre)
@@ -103,24 +102,25 @@ A count of movies by original language reveals that of all the popular movies, e
 #### Visualizing
 
 ```{R}
-Project_df %>% ggplot(aes(x=Oscar, y=vote_average, color=Oscar)) + ylab("Average Rating") + ggtitle("Distribution of Movie Ratings") + geom_boxplot(size=1) + geom_jitter(alpha=.05) + theme(legend.position = "none")
+Project_df %>% ggplot(aes(x=Oscar, y=vote_average, color=Oscar)) + ylab("Average Rating") + ggtitle("Distribution of Movie Ratings") + geom_boxplot(size=1) + geom_jitter(alpha=.08) + theme(legend.position = "none")
 ```
 
 This plot visually diplays the five number summary for oscar-winning vs non ocar-winning movies (min, max, median, upper and lower quartiles) and an overlay of the true data points. From this we can see that the Oscar-winning movies have a much smaller spread of data and are generally rated higher than non Oscar-winning movies. They also have much fewer outliers.
 
 ```{R}
-Project_df %>% ggplot(aes(x=vote_average, fill=Oscar)) + ggtitle("Shape of Movie Ratings") + geom_histogram(alpha=.5) + scale_y_continuous(lim=c(0,400), breaks = seq(0,400,50))
-Project_df %>% ggplot(aes(x=popularity, fill=Oscar)) + ggtitle("Distribution & Shape of Movie Ratings") + geom_density(alpha=.3) + geom_rug() + scale_x_continuous(lim=c(0,150))
+Project_df %>% na.omit() %>% ggplot(aes(x=Award, y=popularity)) + geom_bar(aes(fill=Award),stat="summary", fun=mean) + geom_errorbar(stat="summary", width=.35) + ggtitle("Movie Popularity by Oscar Award Type") + xlab("Oscar Type") + ylab("Average Popularity Metric") + scale_y_continuous(breaks = seq(0,30,5))
+```
+This displays the difference in the popularity metric for Oscar nominees vs Oscar winners. Oscar nominees are more popular by and approximate value of 7. Oscar winners have a slightly narrower margin of error in average popularity.
 
+```{R}
+Project_df %>% na.omit() %>% ggplot(aes(x=Year,y=popularity, color=Award)) + geom_point() + scale_y_continuous(lim=c(0,150)) + scale_x_discrete(breaks = seq(0,2020,10)) + geom_smooth(method = lm) 
+
+#Project_df %>% na.omit() %>% ggplot(aes(x=Year, y=popularity)) + geom_bar(aes(fill=Award),stat="summary", fun=mean, position = "dodge") + geom_errorbar(stat="summary", width=.35) + ggtitle("Movie Popularity by Oscar Award Type") + xlab("Oscar Type") + ylab("Average Popularity Metric")
+
+Project_df %>% ggplot(aes(x=popularity, fill=Oscar)) + ggtitle("Distribution & Shape of Movie Ratings") + geom_density(alpha=.3) + geom_rug() + scale_x_continuous(lim=c(0,150), breaks = seq(0,150,25)) 
 ```
 
 This plot shows the shape and distribution of movie popularity. Both Oscar winners and non-Oscar winners have a unimodal shape, with a very similar distribution as their graphs overlab almost entirely. 
-
-```{R}
-Project_df %>% na.omit() %>% ggplot(aes(x=Year,y=popularity, color=Award)) + geom_point() + scale_y_continuous(lim=c(0,150)) + scale_x_discrete(breaks = seq(0,2020,10)) 
-```
-
-This graph demonstrates that the popularity of Oscar winners and nominees are increasing with time, but more so for Oscar winners.
 
 #### Concluding Remarks
 
