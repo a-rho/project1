@@ -46,7 +46,6 @@ PopMovies %>% separate(6, sep="-", into = c("Year", "month", "day")) -> PopMovie
 
 ```{R}
 PopMovies_Reshaped %>% left_join(Oscars, by = c("original_title"="Film")) -> Pop2Oscar
-
 ```
 
 The datasets were left joined by movie/film name, keeping all the PopMovies films but only the Oscars films that had a match in PopMovies (although all of the Oscar films ended up being in the popmovies dataset already). This was done so that statistics for Oscar-winning movies vs movies without an Oscar could be compared. The original 'PopMovies' dataset had 10000 observations, the 'Oscars' dataset had 571 observations, and the resulting joined dataset had 10009 observations. The IDs included in both datasets include the movie name, year, and genre. The Oscars dataset includes tomatometer, audience, and streaming data that is not included in the PopMovies dataset. After joining, no observations were dropped from the Oscars dataset. 
@@ -113,7 +112,7 @@ Project_df %>% na.omit() %>% ggplot(aes(x=Award, y=popularity)) + geom_bar(aes(f
 This displays the difference in the popularity metric for Oscar nominees vs Oscar winners. Oscar nominees are more popular by and approximate value of 7. Oscar winners have a slightly narrower margin of error in average popularity.
 
 ```{R}
-Project_df %>% na.omit() %>% ggplot(aes(x=Year,y=popularity, color=Award)) + geom_point() + scale_y_continuous(lim=c(0,150)) + scale_x_discrete(breaks = seq(0,2020,10)) + geom_smooth(method = lm) 
+#Project_df %>% na.omit() %>% ggplot(aes(x=Year,y=popularity, color=Award)) + geom_point() + scale_y_continuous(lim=c(0,150)) + scale_x_discrete(breaks = seq(0,2020,10)) + geom_smooth(method = lm) 
 
 #Project_df %>% na.omit() %>% ggplot(aes(x=Year, y=popularity)) + geom_bar(aes(fill=Award),stat="summary", fun=mean, position = "dodge") + geom_errorbar(stat="summary", width=.35) + ggtitle("Movie Popularity by Oscar Award Type") + xlab("Oscar Type") + ylab("Average Popularity Metric")
 
@@ -124,8 +123,6 @@ This plot shows the shape and distribution of movie popularity. Both Oscar winne
 
 #### Concluding Remarks
 
-If any!
-
-
+Oscar winning or nominated movies are generally just as popular as non-Oscar movies, but Oscar nominees are more popular than Oscar winners. 
 
 
